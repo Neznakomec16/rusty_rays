@@ -1,19 +1,28 @@
 mod color;
+mod hittable;
+mod hittable_list;
 mod ray;
+mod sphere;
 mod vec3;
+mod inretval;
+
 use std::io::stdout;
 
-use color::Color;
+use color::{Color, write_color};
 use ray::Ray;
-use vec3::Vec3;
+use vec3::{Point3, Vec3, dot};
 
-use crate::{color::write_color, vec3::Point3};
+use crate::{hittable::Hittable, hittable_list::HittableList, inretval::Interval, sphere::Sphere};
 
-fn ray_color(r: Ray) -> Color {
+fn ray_color(r: &Ray, world: &impl Hittable) -> Color {
+    if let Some(rec) = world.hit(r, Interval::new(0.0, f64::INFINITY)) {
+        return 0.5 * (Color::from(rec.normal) + Color::new(1.0, 1.0, 1.0));
+    }
     let unit_direction = r.direction.unit_vector();
     let a = 0.5 * (unit_direction.y + 1.0);
     (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
 }
+
 fn main() {
     let aspect_ratio = 16.0 / 9.0;
     let image_width = 400;
@@ -21,6 +30,11 @@ fn main() {
     // Calculate the image high
     let mut image_height = (image_width as f64 / aspect_ratio) as usize;
     image_height = if image_height < 1 { 1 } else { image_height };
+
+    // World
+    let mut world = HittableList::new();
+    world.add(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5));
+    world.add(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0));
 
     // Camera
     let focal_length = 1.0;
@@ -47,7 +61,7 @@ fn main() {
                 pixel100_loc + (i as f64 * pixel_delta_u) + (j as f64 * pixel_delta_v);
             let ray_direction = pixel_center - camera_center;
             let r = Ray::new(camera_center, ray_direction);
-            let pixel_color = ray_color(r);
+            let pixel_color = ray_color(&r, &world);
             write_color(&out, pixel_color);
         }
     }
