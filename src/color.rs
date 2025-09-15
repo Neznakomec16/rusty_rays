@@ -1,9 +1,9 @@
 use std::{
     io::Write,
-    ops::{Add, Mul},
+    ops::{Add, AddAssign, Mul},
 };
 
-use crate::vec3::Vec3;
+use crate::{inretval::Interval, vec3::Vec3};
 
 pub struct Color {
     pub r: f64,
@@ -27,7 +27,7 @@ impl Mul<Color> for f64 {
     type Output = Color;
 
     fn mul(self, rhs: Color) -> Self::Output {
-        Color::new(self * rhs.r, self * rhs.b, self * rhs.b)
+        Color::new(self * rhs.r, self * rhs.g, self * rhs.b)
     }
 }
 
@@ -39,10 +39,32 @@ impl Add for Color {
     }
 }
 
+impl AddAssign for Color {
+    fn add_assign(&mut self, rhs: Self) {
+        self.r += rhs.r;
+        self.g += rhs.g;
+        self.b += rhs.b;
+    }
+}
+
+const INTENCITY: Interval = Interval::new(0.0, 0.999);
+
+fn linear_to_gamma(linear_component: f64) -> f64 {
+    if linear_component > 0.0 {
+        linear_component.sqrt()
+    } else {
+        0.0
+    }
+}
+
 pub fn write_color(mut out: impl Write, pixel_color: Color) {
-    let rbyte = (255.999 * pixel_color.r) as usize;
-    let gbyte = (255.999 * pixel_color.g) as usize;
-    let bbyte = (255.999 * pixel_color.b) as usize;
+    let r = linear_to_gamma(pixel_color.r);
+    let g = linear_to_gamma(pixel_color.g);
+    let b = linear_to_gamma(pixel_color.b);
+
+    let rbyte = (256.0 * INTENCITY.clamp(r)) as usize;
+    let gbyte = (256.0 * INTENCITY.clamp(g)) as usize;
+    let bbyte = (256.0 * INTENCITY.clamp(b)) as usize;
 
     writeln!(out, "{rbyte} {gbyte} {bbyte}").unwrap();
 }

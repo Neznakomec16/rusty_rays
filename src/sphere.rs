@@ -1,5 +1,8 @@
 use crate::{
-    hittable::{HitRecord, Hittable}, inretval::Interval, ray::Ray, vec3::{dot, Point3}
+    hittable::{HitRecord, Hittable},
+    inretval::Interval,
+    ray::Ray,
+    vec3::{Point3, dot},
 };
 
 pub struct Sphere {
@@ -15,7 +18,7 @@ impl Sphere {
 
 impl Hittable for Sphere {
     fn hit(&self, r: &Ray, ray_t: Interval) -> Option<HitRecord> {
-        let oc = self.center - r.origin;
+        let oc = r.origin - self.center;
         let a = r.direction.length_squared();
         let h = dot(r.direction, oc);
         let c = oc.length_squared() - self.radius * self.radius;
@@ -24,9 +27,9 @@ impl Hittable for Sphere {
             return None;
         }
         let sqrtd = discriminant.sqrt();
-        let mut root = (h - sqrtd) / a;
+        let mut root = (-h - sqrtd) / a;
         if !ray_t.surrounds(root) {
-            root = (h + sqrtd) / a;
+            root = (-h + sqrtd) / a;
             if !ray_t.surrounds(root) {
                 return None;
             }
@@ -34,7 +37,7 @@ impl Hittable for Sphere {
         let t = root;
         let p = r.at(t);
         let normal = (p - self.center) / self.radius;
-        let mut rec = HitRecord::new(t,p, normal);
+        let mut rec = HitRecord::new(t, p, normal);
         rec.set_face_normal(r);
         Some(rec)
     }
