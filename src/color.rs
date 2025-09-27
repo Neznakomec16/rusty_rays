@@ -3,8 +3,9 @@ use std::{
     ops::{Add, AddAssign, Mul},
 };
 
-use crate::{inretval::Interval, vec3::Vec3};
+use crate::{inretval::Interval, util::{random_f64, random_f64_range}, vec3::Vec3};
 
+#[derive(Clone, Copy)]
 pub struct Color {
     pub r: f64,
     pub g: f64,
@@ -14,6 +15,16 @@ pub struct Color {
 impl Color {
     pub fn new(r: f64, g: f64, b: f64) -> Self {
         Color { r, g, b }
+    }
+    pub fn random() -> Color {
+        Self::new(random_f64(), random_f64(), random_f64())
+    }
+    pub fn random_range(min: f64, max: f64) -> Color {
+        Self::new(
+            random_f64_range(min, max),
+            random_f64_range(min, max),
+            random_f64_range(min, max),
+        )
     }
 }
 
@@ -44,6 +55,14 @@ impl AddAssign for Color {
         self.r += rhs.r;
         self.g += rhs.g;
         self.b += rhs.b;
+    }
+}
+
+impl Mul for Color {
+    type Output = Color;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        Color::new(self.r * rhs.r, self.g * rhs.g, self.b * rhs.b)
     }
 }
 
